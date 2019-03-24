@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "all_driver_face.h": "c",
+        "printf.h": "c",
+        "nvic.h": "c"
+    }
+}
