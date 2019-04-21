@@ -11,6 +11,7 @@
             "request": "launch",
             "type": "cortex-debug",
             "servertype": "openocd",
+            "device": "STM32F103RB",
             "configFiles": [
                 "interface/stlink-v2.cfg",
                 "target/stm32f1x.cfg"

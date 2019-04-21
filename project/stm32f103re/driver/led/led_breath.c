@@ -8,148 +8,87 @@
 #include "led_breath.h"
 
 
-#ifndef ARRAY_LEN
-#define ARRAY_LEN(array) (sizeof((array))/sizeof((array)[0]))
-#endif
+extern uint16_t breath_table[];
+extern uint16_t breath_len;
 
-#define LED1_PORT GPIOA
-#define LED1_PIN GPIO6
-
-/* Morse standard timings */
-#define ELEMENT_TIME 500
-#define DIT (1*ELEMENT_TIME)
-#define DAH (3*ELEMENT_TIME)
-#define INTRA (1*ELEMENT_TIME)
-#define INTER (3*ELEMENT_TIME)
-#define WORD (7*ELEMENT_TIME)
-
-uint16_t frequency_sequence[] = {
-	DIT,
-	INTRA,
-	DIT,
-	INTRA,
-	DIT,
-	INTER,
-	DAH,
-	INTRA,
-	DAH,
-	INTRA,
-	DAH,
-	INTER,
-	DIT,
-	INTRA,
-	DIT,
-	INTRA,
-	DIT,
-	WORD,
-};
-
-int frequency_sel = 0;
-
-
-
-static void gpio_setup(void)
-{
-	/* Enable GPIO clock for leds. */
-	rcc_periph_clock_enable(RCC_GPIOA);
-
-	/* Enable led as output */
-	gpio_set_mode(LED1_PORT, GPIO_MODE_OUTPUT_50_MHZ,
-		GPIO_CNF_OUTPUT_PUSHPULL, LED1_PIN);
-	gpio_set(LED1_PORT, LED1_PIN);
-
-	/* Set GPIO12 (in GPIO port C) to 'output push-pull'. */
-	gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ,
-		      GPIO_CNF_OUTPUT_PUSHPULL, GPIO4);
-
-	/* Set GPIO13 (in GPIO port B) to 'output push-pull'. */
-	gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ,
-		      GPIO_CNF_OUTPUT_PUSHPULL, GPIO5);
-}
-
-static void tim_setup(void)
+static void clock_setup(void)
 {
 	/* Enable TIM3 clock. */
 	rcc_periph_clock_enable(RCC_TIM3);
 
-	/* Enable TIM3 interrupt. */
-	nvic_enable_irq(NVIC_TIM3_IRQ);
-
-	/* Reset TIM3 peripheral to defaults. */
-	rcc_periph_reset_pulse(RST_TIM3);
-
-	/* Timer global mode:
-	 * - No divider
-	 * - Alignment edge
-	 * - Direction up
-	 * (These are actually default values after reset above, so this call
-	 * is strictly unnecessary, but demos the api for alternative settings)
-	 */
-	timer_set_mode(TIM3, TIM_CR1_CKD_CK_INT,
-		TIM_CR1_CMS_EDGE, TIM_CR1_DIR_UP);
-
-	/*
-	 * Please take note that the clock source for STM32 timers
-	 * might not be the raw APB1/APB2 clocks.  In various conditions they
-	 * are doubled.  See the Reference Manual for full details!
-	 * In our case, TIM3 on APB1 is running at double frequency, so this
-	 * sets the prescaler to have the timer run at 5kHz
-	 */
-	timer_set_prescaler(TIM3, ((rcc_apb1_frequency * 2) / 5000));
-
-	/* Disable preload. */
-	timer_disable_preload(TIM3);
-	timer_continuous_mode(TIM3);
-
-	/* count full range, as we'll update compare value continuously */
-	timer_set_period(TIM3, 65535);
-
-	/* Set the initual output compare value for OC1. */
-	timer_set_oc_value(TIM3, TIM_OC1, frequency_sequence[frequency_sel++]);
-
-	/* Counter enable. */
-	timer_enable_counter(TIM3);
-	// timer_enable_oc_output(TIM3, TIM_OC1);
-	/* Enable Channel 1 compare interrupt to recalculate compare values */
-	timer_enable_irq(TIM3, TIM_DIER_CC1IE);
+	/* Enable GPIOC, Alternate Function clocks. */
+	rcc_periph_clock_enable(RCC_GPIOA);
+	// rcc_periph_clock_enable(RCC_GPIOB);
+	rcc_periph_clock_enable(RCC_AFIO);
 }
 
-void tim3_isr(void)
+static void gpio_setup(void)
 {
-	if (timer_get_flag(TIM3, TIM_SR_CC1IF)) {
+	/*
+	 * Set GPIO6 and 7 (in GPIO port A) to
+	 * 'output alternate function push-pull'.
+	 */
+	gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ,
+		      GPIO_CNF_OUTPUT_ALTFN_PUSHPULL,
+		      GPIO_TIM3_CH1 | GPIO_TIM3_CH2);
 
-		/* Clear compare interrupt flag. */
-		timer_clear_flag(TIM3, TIM_SR_CC1IF);
+}
 
-		/*
-		 * Get current timer value to calculate next
-		 * compare register value.
-		 */
-		uint16_t compare_time = timer_get_counter(TIM3);
+static void tim_setup(void)
+{
+	/* Clock division and mode */
+	TIM3_CR1 = TIM_CR1_CKD_CK_INT | TIM_CR1_CMS_EDGE;
+	/* Period */
+	TIM3_ARR = 500;
+	/* Prescaler */
+	TIM3_PSC = 9-1;
+	TIM3_EGR = TIM_EGR_UG;
 
-		/* Calculate and set the next compare value. */
-		uint16_t frequency = frequency_sequence[frequency_sel++];
-		uint16_t new_time = compare_time + frequency;
+	/* ---- */
+	/* Output compare 1 mode and preload */
+	TIM3_CCMR1 |= TIM_CCMR1_OC1M_PWM1 | TIM_CCMR1_OC1PE;
 
-		timer_set_oc_value(TIM3, TIM_OC1, new_time);
-		if (frequency_sel == ARRAY_LEN(frequency_sequence)) {
-			frequency_sel = 0;
-		}
+	/* Polarity and state */
+	TIM3_CCER |=  TIM_CCER_CC1E;
+	//TIM3_CCER |= TIM_CCER_CC1E;
 
-		/* Toggle LED to indicate compare event. */
-		gpio_toggle(LED1_PORT, LED1_PIN);
-	}
+	/* Capture compare value */
+	TIM3_CCR1 = 0;
+
+	/* ---- */
+	/* Output compare 2 mode and preload */
+	TIM3_CCMR1 |= TIM_CCMR1_OC2M_PWM1 | TIM_CCMR1_OC2PE;
+
+	/* Polarity and state */
+	TIM3_CCER |= TIM_CCER_CC2P | TIM_CCER_CC2E;
+	//TIM3_CCER |= TIM_CCER_CC2E;
+
+	/* Capture compare value */
+	TIM3_CCR2 = 0;
+	/* ---- */
+	/* ARR reload enable */
+	TIM3_CR1 |= TIM_CR1_ARPE;
+
+	/* Counter enable */
+	TIM3_CR1 |= TIM_CR1_CEN;
 }
 
 int led_breath_init(void)
 {
+	clock_setup();
 	gpio_setup();
 	tim_setup();
 	return 0;
 }
+uint16_t breath_i=0;
 
 int led_breath_task(void)
 {
-	gpio_toggle(GPIOA, GPIO4);	/* LED on/off */
+	TIM3_CCR1 = breath_table[breath_i];
+	TIM3_CCR2 = breath_table[breath_i];
+	breath_i++;
+	if (breath_i > breath_len){
+		breath_i = 0;
+	}
 	return 0;
 }

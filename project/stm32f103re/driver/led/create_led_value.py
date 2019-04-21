@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import math
 
 max_value = 500
-point_number = 400
+point_number = 700
 
 
 #  6/point_number != 6.0/point_number
@@ -23,7 +23,7 @@ for tmp_x in tmp_lx:
     tmp_y1 = 1 / (math.sqrt(2 * numpy.pi))
     tmp_y2 = - (tmp_x * tmp_x) / 2
     tmp_y3 =tmp_y1 *  math.exp(tmp_y2)
-    ly.append(int(tmp_y3 * 2.5 * max_value))
+    ly.append(int(tmp_y3 * 2.5 * max_value)-4)
     lx.append(int((tmp_x + 3) * point_number / 6))
 
 print(ly)

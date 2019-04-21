@@ -24,24 +24,36 @@ OUT_DIR = out
 SRC_DIR = \
 mypro \
 driver \
+driver/common \
 driver/printf \
 driver/led \
+driver/sht20 \
+driver/baiduiot\
 
 
 # define head file dir
 CFLAGS = \
 -Imypro \
 -Idriver \
+-Idriver/common \
 -Idriver/printf \
 -Idriver/led \
+-Idriver/sht20 \
+-Idriver/baiduiot\
 
 
 SRCS = \
 mypro/main.c  \
-mypro/delay.c  \
 driver/driver_face.c \
+driver/common/common.c  \
 driver/printf/printf.c \
 driver/led/led_breath.c \
+driver/led/breath_table.c \
+driver/led/iic.c \
+driver/led/sht20.c \
+driver/baiduiot/baiduiot.c \
+driver/baiduiot/esp8266.c \
+driver/baiduiot/mqtt.c \
 
 
 

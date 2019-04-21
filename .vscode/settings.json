@@ -2,6 +2,11 @@
     "files.associations": {
         "all_driver_face.h": "c",
         "printf.h": "c",
-        "nvic.h": "c"
+        "nvic.h": "c",
+        "sht20.h": "c",
+        "mqtt.h": "c",
+        "stdlib.h": "c",
+        "string": "c",
+        "common.h": "c"
     }
 }

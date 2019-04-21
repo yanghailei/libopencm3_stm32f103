@@ -5,7 +5,7 @@
 #include <libopencm3/stm32/exti.h>
 
 #include "driver_face.h"
-#include "delay.h"
+#include "common.h"
 
 /* Set STM32 to 72 MHz. */
 static void clock_setup(void)
@@ -16,11 +16,13 @@ static void clock_setup(void)
 int main(void)
 {
     clock_setup();
-    driver_init();
     delay_setup();
+    
+    driver_init();
+    
     while(1){
+        delay_us(20000);
         driver_task();
-        delay_us(0xFFFFF);
     }
     return 0;
 }
