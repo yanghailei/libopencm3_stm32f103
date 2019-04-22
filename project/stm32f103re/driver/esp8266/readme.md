@@ -4,6 +4,14 @@
 
 ## 4b-esp8266_at_command_examples_cn.pdf
 
+## AT bin Version
+```
+ESP8266 AT Bin V1.7.0
+基于 ESP8266_NonOS_SDK V3.0.0。
+
+受 AT bin 的大小限制，默认仅支持 `1024+1024 flash map` 。
+```
+
 # Steps for link server by AT
 1. AT+CWMODE=1
 >> set esp8266 into station mode
