@@ -1,5 +1,6 @@
 #include "iic.h"
 #include "sht20.h"
+#include "common.h"
 
 sht20_t sht20;
 

@@ -53,7 +53,7 @@ driver/led/iic.c \
 driver/led/sht20.c \
 driver/baiduiot/baiduiot.c \
 driver/baiduiot/esp8266.c \
-driver/baiduiot/mqtt.c \
+driver/baiduiot/mqtt_client.c \
 
 
 
