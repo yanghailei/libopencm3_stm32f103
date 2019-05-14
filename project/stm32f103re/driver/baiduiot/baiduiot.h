@@ -30,6 +30,7 @@ typedef struct
     uint32_t requestid;
     float tempreture;
     float humidity;
+    uint8_t link;
     prot_t prot;
 }baiduiot_t;
 

@@ -112,7 +112,18 @@ int esp8266_senddata(uint8_t* buf, uint32_t count)
     esp8266_usart_send(buf, count);
     return 0;
 }
-
+int esp8266_recvdata(uint8_t* buf, uint32_t *count)
+{
+    if (reve_buff_len != 0 ){
+        memcpy(buf, reve_buff, reve_buff_len);
+        *count = reve_buff_len;
+    } else {
+        *count = 0;
+    }
+    
+    reve_buff_len = 0;
+    return 0;
+}
 int esp8266_init(uint8_t* wifi_name, uint8_t* wifi_password, uint8_t* tcp_ip,
     uint8_t* tcp_port)
 {

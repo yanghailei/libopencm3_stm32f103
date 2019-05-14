@@ -72,6 +72,11 @@ enum {
     MQTT_QOS_2    = 2<<1,
 };
 
+enum {
+    MQTT_LINK_OK        = 0,
+    MQTT_LINK_ERROR     = 1,
+    MQTT_LINK_BREAK     = 1<<4,
+};
 
 typedef struct{
     uint8_t * buff;
@@ -98,19 +103,36 @@ typedef struct{
     uint8_t  topic[200];
 }mqtt_cfg_publish_t;
 
+
+
+typedef struct {
+    uint8_t wait_id;
+    uint8_t wait_num;
+    uint8_t buff[10];
+}mqtt_wait_ack_t;
+
+typedef struct {
+    uint8_t status;
+    uint32_t wait_sum;
+    uint32_t wait_max_sum;
+    mqtt_wait_ack_t ping;
+    mqtt_wait_ack_t pub;
+    mqtt_wait_ack_t connect;
+}mqtt_link_t;
+
 typedef struct{
     mqtt_cfg_connect_t cfg_connect;
     mqtt_cfg_publish_t cfg_publish;
+    uint32_t wait_max;
+    uint8_t link_status;
     int (* send)(uint8_t *pack, uint32_t len);
 }mqtt_t;
 
+int mqtt_init(mqtt_t *mqtt);
+int mqtt_connect(mqtt_t *mqtt);
+int mqtt_publish(mqtt_t *mqtt,uint8_t *msg, uint32_t msglen);
+int mqtt_ping(mqtt_t *mqtt);
 
-
-
-int mqtt_connect(mqtt_cfg_connect_t* mqtt_cfg, int (*send)(uint8_t *, uint32_t));
-int mqtt_publish(mqtt_cfg_publish_t *mqtt_cfg, 
-                    uint8_t *msg, uint32_t len,
-                    int (* send)(uint8_t *, uint32_t));
-int mqtt_ping(int (*send)(uint8_t *, uint32_t));
+int mqtt_ack(mqtt_t *mqtt, uint8_t *buff, uint32_t len);
 
 #endif
