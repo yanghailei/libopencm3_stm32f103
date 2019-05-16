@@ -192,11 +192,8 @@ static int mqtt_publish_vhead_get(mqtt_cfg_publish_t* mqtt_cfg, mqtt_pack_t* vhe
 mqtt_link_t link;
 int mqtt_init(mqtt_t* mqtt)
 {
-    uint32_t tmp;
-    tmp = link.connect.wait_num;
     memset(&link, 0, sizeof(link));
     link.wait_max_sum = mqtt->wait_max;
-    link.connect.wait_num = tmp;
     return 0;
 }
 /*

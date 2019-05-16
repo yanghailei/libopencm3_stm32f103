@@ -77,11 +77,12 @@ static int iot_ping(void)
     return 0;
 }
 
-static int iot_recv(uint8_t *buff, uint32_t *len)
+static int iot_recv(uint8_t* buff, uint32_t* len)
 {
     esp8266_recvdata(buff, len);
     return 0;
 }
+
 int iot_init(void)
 {
     memset(&gmqtt, 0, sizeof(gmqtt));
@@ -99,6 +100,30 @@ int iot_init(void)
         baiduiot.link = 1;
     }
 
+    return 0;
+}
+
+static int iot_relink(void)
+{
+    if (gmqtt.link_status & MQTT_LINK_ERROR) {
+        if (iot_init() == 0) {
+            printf("%s-%d: iot init success\n", __FUNCTION__, __LINE__);
+            baiduiot.link = 1;
+            gmqtt.link_status = 0;
+        } else {
+            printf("%s-%d: iot init error\n", __FUNCTION__, __LINE__);
+            return -1;
+        }
+    } else if (gmqtt.link_status & MQTT_LINK_BREAK) {
+        if (mqtt_connect(&gmqtt) == 0) {
+            printf("%s-%d: mqtt_connect success\n", __FUNCTION__, __LINE__);
+            baiduiot.link = 1;
+            gmqtt.link_status = 0;
+        } else {
+            printf("%s-%d: mqtt_connect error\n", __FUNCTION__, __LINE__);
+            return -1;
+        }
+    }
     return 0;
 }
 
@@ -122,9 +147,8 @@ int iot_task(void)
     }
     if (baiduiot.link == 0) {
         printf("%s-%d: retry create link\n", __FUNCTION__, __LINE__);
-        if (iot_init() == 0) {
-            printf("%s-%d: mqtt_connect success\n", __FUNCTION__, __LINE__);
-            baiduiot.link = 1;
+        if (iot_relink() != 0) {
+            return -1;
         }
     }
     if ((tmp_1 > 0.2) || (tmp_2 > 0.2)) {
